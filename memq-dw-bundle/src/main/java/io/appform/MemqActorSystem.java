@@ -32,7 +32,7 @@ public class MemqActorSystem implements ActorSystem, Managed {
     private final MetricRegistry metricRegistry;
 
     public MemqActorSystem(MemqConfig memqConfig) {
-        this(memqConfig, (name, parallel) -> Executors.newFixedThreadPool(parallel), new MetricRegistry());
+        this(memqConfig, (name, parallel, queueSize) -> Executors.newFixedThreadPool(parallel), new MetricRegistry());
     }
 
     public MemqActorSystem(
@@ -64,8 +64,10 @@ public class MemqActorSystem implements ActorSystem, Managed {
     @Override
     public final ExecutorService createOrGetExecutorService(HighLevelActorConfig config) {
         val name = config.getExecutorName();
-        val threadPoolSize = determineThreadPoolSize(name);
-        return executors.computeIfAbsent(name, executor -> executorServiceProvider.threadPool(name, threadPoolSize));
+        val threadPoolSize = determineExecutorConfig(name).getThreadPoolSize();
+        val queueSize = determineExecutorConfig(name).getQueueSize();
+        return executors.computeIfAbsent(name, executor -> executorServiceProvider.threadPool(name, threadPoolSize,
+                queueSize));
     }
 
     @Override
@@ -95,11 +97,11 @@ public class MemqActorSystem implements ActorSystem, Managed {
         log.info("Closed Memq Actor System");
     }
 
-    private int determineThreadPoolSize(String name) {
+    private ExecutorConfig determineExecutorConfig(String name) {
         return executorConfigMap.getOrDefault(name, ExecutorConfig.builder()
-                                                        .name(name)
-                                                        .threadPoolSize(Constants.DEFAULT_THREADPOOL)
-                                                        .build()
-                                            ).getThreadPoolSize();
+                .name(name)
+                .threadPoolSize(Constants.DEFAULT_THREADPOOL)
+                .build()
+        );
     }
 }

@@ -12,7 +12,6 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import lombok.Getter;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -25,18 +24,6 @@ import static org.mockito.Mockito.when;
 class MemqActorBundleTest {
 
     private static final String GLOBAL_THREADPOOL_NAME = "GLOBAL";
-
-    static class TestConfig extends Configuration {
-        @Getter
-        private MemqConfig memqConfig = MemqConfig.builder()
-                .executors(List.of(ExecutorConfig.builder()
-                        .threadPoolSize(Constants.DEFAULT_THREADPOOL)
-                        .name(GLOBAL_THREADPOOL_NAME)
-                        .build()))
-                .build();
-
-    }
-
     final TestConfig testConfig = new TestConfig();
     HealthCheckRegistry healthChecks = mock(HealthCheckRegistry.class);
     JerseyEnvironment jerseyEnvironment = mock(JerseyEnvironment.class);
@@ -63,11 +50,22 @@ class MemqActorBundleTest {
 
                 @Override
                 protected ExecutorServiceProvider executorServiceProvider(TestConfig testConfig) {
-                    return (name, parallel) -> Executors.newFixedThreadPool(Constants.DEFAULT_THREADPOOL);
+                    return (name, parallel, queueSize) -> Executors.newFixedThreadPool(Constants.DEFAULT_THREADPOOL);
                 }
             };
             bundle.initialize(bootstrap);
             bundle.run(testConfig, environment);
         });
+    }
+
+    static class TestConfig extends Configuration {
+        @Getter
+        private MemqConfig memqConfig = MemqConfig.builder()
+                .executors(List.of(ExecutorConfig.builder()
+                        .threadPoolSize(Constants.DEFAULT_THREADPOOL)
+                        .name(GLOBAL_THREADPOOL_NAME)
+                        .build()))
+                .build();
+
     }
 }

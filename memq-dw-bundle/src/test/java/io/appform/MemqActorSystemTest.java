@@ -8,7 +8,6 @@ import io.appform.memq.actor.HighLevelActorConfig;
 import io.appform.memq.actor.Message;
 import io.appform.memq.retry.config.NoRetryConfig;
 import lombok.val;
-import org.apache.commons.lang3.builder.ToStringExclude;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,21 +22,6 @@ class MemqActorSystemTest {
     private static final String GLOBAL_THREADPOOL_NAME = "GLOBAL";
     private static final int SINGLE_PARTITION = 1;
 
-    enum ActorType {
-        TEST_HIGH_LEVEL_ACTOR,
-        ;
-    }
-
-    static class TestMessage implements Message {
-
-        String value = UUID.randomUUID().toString();
-
-        @Override
-        public String id() {
-            return value;
-        }
-    }
-
     @Test
     void newActorRegisterAndCloseTest() {
         assertDoesNotThrow(() -> {
@@ -49,7 +33,7 @@ class MemqActorSystemTest {
                             .build()))
                     .build();
             val memqActorSystem = new MemqActorSystem(memqConfig,
-                    (name, parallel) -> Executors.newFixedThreadPool(Constants.DEFAULT_THREADPOOL),
+                    (name, parallel, queueSize) -> Executors.newFixedThreadPool(Constants.DEFAULT_THREADPOOL),
                     metricRegistry);
             val highLevelActorConfig = HighLevelActorConfig.builder()
                     .partitions(SINGLE_PARTITION)
@@ -65,5 +49,19 @@ class MemqActorSystemTest {
             assertNotNull(highLevelActor);
             memqActorSystem.close();
         });
+    }
+
+    enum ActorType {
+        TEST_HIGH_LEVEL_ACTOR,
+    }
+
+    static class TestMessage implements Message {
+
+        String value = UUID.randomUUID().toString();
+
+        @Override
+        public String id() {
+            return value;
+        }
     }
 }

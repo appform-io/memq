@@ -1,6 +1,7 @@
 package io.appform.config;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 
 import javax.validation.constraints.Max;
@@ -21,4 +22,5 @@ public class ExecutorConfig {
     @Max(300)
     int threadPoolSize;
 
+    int queueSize;
 }
