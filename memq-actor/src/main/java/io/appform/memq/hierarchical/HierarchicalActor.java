@@ -86,6 +86,12 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
     }
 
     @Override
+    public boolean publish(final HierarchicalRoutingKey<String> routingKey,
+                           final M message) {
+        return publishActor(routingKey).publish(message);
+    }
+
+    @Override
     public long size() {
         log.info("Size of all workers");
         val atomicLong = new AtomicLong();
@@ -127,37 +133,6 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
             atomicBoolean.set(atomicBoolean.get() && hierarchicalOperationWorker.isRunning());
         });
         return atomicBoolean.get();
-    }
-
-    @Override
-    public void purge(final HierarchicalRoutingKey<String> routingKey) {
-        publishActor(routingKey).purge();
-    }
-
-    @Override
-    public boolean publish(final HierarchicalRoutingKey<String> routingKey,
-                           final M message) {
-        return publishActor(routingKey).publish(message);
-    }
-
-    @Override
-    public long size(final HierarchicalRoutingKey<String> routingKey) {
-        return publishActor(routingKey).size();
-    }
-
-    @Override
-    public long inFlight(final HierarchicalRoutingKey<String> routingKey) {
-        return publishActor(routingKey).inFlight();
-    }
-
-    @Override
-    public boolean isEmpty(final HierarchicalRoutingKey<String> routingKey) {
-        return publishActor(routingKey).isEmpty();
-    }
-
-    @Override
-    public boolean isRunning(final HierarchicalRoutingKey<String> routingKey) {
-        return publishActor(routingKey).isRunning();
     }
 
     private HierarchicalOperationWorker<MessageType, Message> publishActor(final HierarchicalRoutingKey<String> routingKey) {

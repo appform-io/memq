@@ -62,12 +62,17 @@ public abstract class HierarchicalHighLevelActor<MessageType extends Enum<Messag
         log.warn("skipping sideline for actor:{} message:{}", type.name(), message);
     }
 
-    public final void purge() {
-        actor.purge();
-    }
-
     public final boolean publish(final M message) {
         return actor.publish(message);
+    }
+
+    public final boolean publish(final HierarchicalRoutingKey<String> routingKey, final M message) {
+        return actor.publish(routingKey, message);
+    }
+
+
+    public final void purge() {
+        actor.purge();
     }
 
     public final long size() {
@@ -84,30 +89,6 @@ public abstract class HierarchicalHighLevelActor<MessageType extends Enum<Messag
 
     public final boolean isRunning() {
         return actor.isRunning();
-    }
-
-    public final void purge(final HierarchicalRoutingKey<String> routingKey) {
-        actor.purge(routingKey);
-    }
-
-    public final boolean publish(final HierarchicalRoutingKey<String> routingKey, final M message) {
-        return actor.publish(routingKey, message);
-    }
-
-    public final long size(final HierarchicalRoutingKey<String> routingKey) {
-        return actor.size(routingKey);
-    }
-
-    public final long inFlight(final HierarchicalRoutingKey<String> routingKey) {
-        return actor.inFlight(routingKey);
-    }
-
-    public final boolean isEmpty(final HierarchicalRoutingKey<String> routingKey) {
-        return actor.isEmpty(routingKey);
-    }
-
-    public final boolean isRunning(final HierarchicalRoutingKey<String> routingKey) {
-        return actor.isRunning(routingKey);
     }
 
 }
