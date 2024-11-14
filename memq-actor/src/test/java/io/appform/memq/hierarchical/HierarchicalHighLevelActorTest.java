@@ -90,20 +90,11 @@ public class HierarchicalHighLevelActorTest {
                 Assertions.assertNotNull(worker);
 
                 val routingKeyWorker = worker.getRoutingKey();
-                System.out.println("routingKeyWorker : " + routingKeyWorker.getRoutingKey());
-//                Assertions.assertNotNull(publisherQueueName);
-//                val publisherQueueNameTokens = new LinkedHashSet<>(Arrays.stream(worker
-//                                .getActorImpl()
-//                                .getPublishActor()
-//                                .queueName()
-//                                .split("\\."))
-//                        .filter(e -> !e.isBlank() && !flowLevelPrefix.contains(e))
-//                        .toList());
-//
-//                val expectedElementsInQueueName = new LinkedHashSet<>(routingKey.getRoutingKey().stream().filter(e -> !e.isBlank()).toList());
-//                expectedElementsInQueueName.add(flowType.name());
-//
-//                publisherQueueNameTokens.forEach(ele -> Assertions.assertTrue(expectedElementsInQueueName.contains(ele)));
+                if(!worker.getRoutingKey().getRoutingKey().isEmpty()) {
+                    val routingKeyWorkerStr = String.join(",",routingKeyWorker.getRoutingKey());
+                    val routingKeyStr = String.join(",", routingKey.getRoutingKey());
+                    Assertions.assertEquals(routingKeyWorkerStr, routingKeyStr);
+                }
                 message.setExecutorName(String.join("-", routingKeyWorker.getRoutingKey()));
                 try {
                     router.publish(routingKey, message);
