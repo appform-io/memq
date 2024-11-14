@@ -1,6 +1,6 @@
 package io.appform.memq.observer;
 
-import io.appform.memq.actor.Actor;
+import io.appform.memq.actor.IActor;
 import io.appform.memq.actor.Message;
 import lombok.Getter;
 
@@ -15,7 +15,7 @@ public abstract class ActorObserver {
         this.next = next;
     }
 
-    public abstract void initialize(Actor<? extends Message> actor);
+    public abstract void initialize(IActor<? extends Message> actor);
 
     public abstract boolean execute(
             final ActorObserverContext<? extends Message> context,

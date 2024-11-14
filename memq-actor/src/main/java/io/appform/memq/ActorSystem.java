@@ -1,12 +1,13 @@
 package io.appform.memq;
 
 import com.codahale.metrics.MetricRegistry;
-import io.appform.memq.actor.Actor;
+import io.appform.memq.actor.IActor;
 import io.appform.memq.actor.Message;
 import io.appform.memq.exceptionhandler.config.DropConfig;
 import io.appform.memq.exceptionhandler.config.ExceptionHandlerConfigVisitor;
 import io.appform.memq.exceptionhandler.config.SidelineConfig;
 import io.appform.memq.actor.MessageMeta;
+import io.appform.memq.hierarchical.IHierarchicalActor;
 import io.appform.memq.observer.ActorObserver;
 import io.appform.memq.retry.RetryStrategy;
 import io.appform.memq.stats.ActorMetricObserver;
@@ -20,7 +21,8 @@ import java.util.function.*;
 
 public interface ActorSystem extends AutoCloseable {
 
-    void register(Actor<?> actor);
+    void register(IActor<?> actor);
+    void register(IHierarchicalActor<?> actor);
 
     ExecutorService createOrGetExecutorService(HighLevelActorConfig config);
 

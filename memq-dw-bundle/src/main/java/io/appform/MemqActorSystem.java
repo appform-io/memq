@@ -4,8 +4,9 @@ import com.codahale.metrics.MetricRegistry;
 import io.appform.config.ExecutorConfig;
 import io.appform.config.MemqConfig;
 import io.appform.memq.ActorSystem;
-import io.appform.memq.actor.Actor;
+import io.appform.memq.actor.IActor;
 import io.appform.memq.HighLevelActorConfig;
+import io.appform.memq.hierarchical.IHierarchicalActor;
 import io.appform.memq.observer.ActorObserver;
 import io.appform.memq.retry.RetryStrategy;
 import io.appform.memq.retry.RetryStrategyFactory;
@@ -28,7 +29,7 @@ public class MemqActorSystem implements ActorSystem, Managed {
     private final ConcurrentHashMap<String, ExecutorService> executors;
     private final ExecutorServiceProvider executorServiceProvider;
     private final Map<String, ExecutorConfig> executorConfigMap;
-    private final List<Actor<?>> registeredActors;
+    private final List<IActor<?>> registeredActors;
     private final RetryStrategyFactory retryStrategyFactory;
     private final MetricRegistry metricRegistry;
     private final List<ActorObserver> actorObservers;
@@ -55,12 +56,18 @@ public class MemqActorSystem implements ActorSystem, Managed {
     //System shutdown
     @Override
     public void close() {
-        registeredActors.forEach(Actor::close);
+        registeredActors.forEach(IActor::close);
         executors.values().forEach(ExecutorService::shutdown);
     }
 
     @Override
-    public final void register(Actor<?> actor) {
+    public final void register(IActor<?> actor) {
+        registeredActors.add(actor);
+        actor.start(); //Starting actor during registration
+    }
+
+    @Override
+    public final void register(IHierarchicalActor<?> actor) {
         registeredActors.add(actor);
         actor.start(); //Starting actor during registration
     }
@@ -89,7 +96,7 @@ public class MemqActorSystem implements ActorSystem, Managed {
 
     @Override
     public boolean isRunning() {
-        return !registeredActors.isEmpty() && registeredActors.stream().allMatch(Actor::isRunning);
+        return !registeredActors.isEmpty() && registeredActors.stream().allMatch(IActor::isRunning);
     }
 
     @Override

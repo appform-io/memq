@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
-public class Actor<M extends Message> implements AutoCloseable {
+public class Actor<M extends Message> implements IActor<M> {
 
     private final String name;
     private final ExecutorService executorService;
@@ -84,12 +84,14 @@ public class Actor<M extends Message> implements AutoCloseable {
         this.rootObserver = setupObserver(observers);
     }
 
+    @Override
     public final boolean isEmpty() {
         return mailboxes.values()
                 .stream()
                 .allMatch(Mailbox::isEmpty);
     }
 
+    @Override
     public final long size() {
         return mailboxes.values()
                 .stream()
@@ -97,6 +99,7 @@ public class Actor<M extends Message> implements AutoCloseable {
                 .sum();
     }
 
+    @Override
     public final long inFlight() {
         return mailboxes.values()
                 .stream()
@@ -104,16 +107,19 @@ public class Actor<M extends Message> implements AutoCloseable {
                 .sum();
     }
 
+    @Override
     public final boolean isRunning() {
         return mailboxes.values()
                 .stream()
                 .allMatch(Mailbox::isRunning);
     }
 
+    @Override
     public final void purge() {
         mailboxes.values().forEach(Mailbox::purge);
     }
 
+    @Override
     public final boolean publish(final M message) {
         return rootObserver.execute(ActorObserverContext.builder()
                                      .operation(ActorOperation.PUBLISH)
@@ -124,6 +130,7 @@ public class Actor<M extends Message> implements AutoCloseable {
                                      .publish(message));
     }
 
+    @Override
     public final void start() {
         mailboxes.values().forEach(Mailbox::start);
     }

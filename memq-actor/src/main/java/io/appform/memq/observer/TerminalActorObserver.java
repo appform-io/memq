@@ -1,7 +1,7 @@
 package io.appform.memq.observer;
 
 
-import io.appform.memq.actor.Actor;
+import io.appform.memq.actor.IActor;
 import io.appform.memq.actor.Message;
 
 import java.util.function.BooleanSupplier;
@@ -13,7 +13,7 @@ public final class TerminalActorObserver extends ActorObserver {
     }
 
     @Override
-    public void initialize(Actor<? extends Message> actor) {
+    public void initialize(IActor<? extends Message> actor) {
     }
 
     @Override

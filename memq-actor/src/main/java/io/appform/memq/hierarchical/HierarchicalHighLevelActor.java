@@ -1,10 +1,10 @@
-package io.appform.memq;
+package io.appform.memq.hierarchical;
 
 
-import io.appform.memq.actor.Actor;
-import io.appform.memq.actor.IActor;
+import io.appform.memq.ActorSystem;
 import io.appform.memq.actor.Message;
 import io.appform.memq.actor.MessageMeta;
+import io.appform.memq.hierarchical.tree.key.HierarchicalRoutingKey;
 import io.appform.memq.observer.ActorObserver;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -13,55 +13,46 @@ import java.util.List;
 import java.util.function.ToIntFunction;
 
 @Slf4j
-public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M extends Message> {
+public abstract class HierarchicalHighLevelActor<MessageType extends Enum<MessageType>, M extends Message> {
+
 
     @Getter
     private final MessageType type;
-    protected final IActor<M> actor;
+    @Getter
+    private final HierarchicalActor<MessageType, M> actor;
 
     @SuppressWarnings("unused")
-    protected HighLevelActor(
+    protected HierarchicalHighLevelActor(
             MessageType type,
-            HighLevelActorConfig highLevelActorConfig,
+            HierarchialHighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem) {
         this(type, highLevelActorConfig, actorSystem, null, List.of());
     }
 
-    protected HighLevelActor(
+    protected HierarchicalHighLevelActor(
             MessageType type,
-            HighLevelActorConfig highLevelActorConfig,
+            HierarchialHighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner) {
         this(type, highLevelActorConfig, actorSystem, partitioner, List.of());
     }
 
-    protected HighLevelActor(
+    protected HierarchicalHighLevelActor(
             MessageType type,
-            HighLevelActorConfig highLevelActorConfig,
+            HierarchialHighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             List<ActorObserver> observers) {
         this(type, highLevelActorConfig, actorSystem, null, observers);
     }
 
-    protected HighLevelActor(
+    protected HierarchicalHighLevelActor(
             MessageType type,
-            HighLevelActorConfig highLevelActorConfig,
+            HierarchialHighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner,
             List<ActorObserver> observers) {
         this.type = type;
-        this.actor = new Actor<>(type.name(),
-                actorSystem.createOrGetExecutorService(highLevelActorConfig),
-                actorSystem.expiryValidator(highLevelActorConfig),
-                this::handle,
-                this::sideline,
-                actorSystem.createExceptionHandler(highLevelActorConfig, this::sideline),
-                actorSystem.createRetryer(highLevelActorConfig),
-                highLevelActorConfig.getPartitions(),
-                highLevelActorConfig.getMaxSizePerPartition(),
-                highLevelActorConfig.getMaxConcurrencyPerPartition(),
-                actorSystem.partitioner(highLevelActorConfig, partitioner),
-                actorSystem.observers(type.name(), highLevelActorConfig, observers));
+        this.actor = new HierarchicalActor<>(type, highLevelActorConfig, actorSystem, this::handle, this::sideline, partitioner, observers);
         actorSystem.register(actor);
     }
 
@@ -88,11 +79,35 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
     }
 
     public final boolean isEmpty() {
-       return actor.isEmpty();
+        return actor.isEmpty();
     }
 
     public final boolean isRunning() {
         return actor.isRunning();
+    }
+
+    public final void purge(final HierarchicalRoutingKey<String> routingKey) {
+        actor.purge(routingKey);
+    }
+
+    public final boolean publish(final HierarchicalRoutingKey<String> routingKey, final M message) {
+        return actor.publish(routingKey, message);
+    }
+
+    public final long size(final HierarchicalRoutingKey<String> routingKey) {
+        return actor.size(routingKey);
+    }
+
+    public final long inFlight(final HierarchicalRoutingKey<String> routingKey) {
+        return actor.inFlight(routingKey);
+    }
+
+    public final boolean isEmpty(final HierarchicalRoutingKey<String> routingKey) {
+        return actor.isEmpty(routingKey);
+    }
+
+    public final boolean isRunning(final HierarchicalRoutingKey<String> routingKey) {
+        return actor.isRunning(routingKey);
     }
 
 }
