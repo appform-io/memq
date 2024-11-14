@@ -123,7 +123,7 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
         log.info("isRunning all workers");
         val atomicBoolean = new AtomicBoolean();
         worker.traverse(hierarchicalOperationWorker -> {
-            log.info("isRunning worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getRoutingKey().getRoutingKey());
+            log.info("isRunning worker: {} {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getRoutingKey().getRoutingKey(), hierarchicalOperationWorker.isRunning());
             atomicBoolean.set(atomicBoolean.get() && hierarchicalOperationWorker.isRunning());
         });
         return atomicBoolean.get();
