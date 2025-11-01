@@ -1,6 +1,5 @@
 package io.appform.memq.actor;
 
-import com.google.common.collect.Sets;
 import io.appform.memq.observer.ActorObserver;
 import io.appform.memq.observer.ActorObserverContext;
 import io.appform.memq.observer.ObserverMessageMeta;
@@ -11,6 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,7 +22,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
@@ -265,26 +264,16 @@ public class Actor<M extends Message> implements AutoCloseable {
                         log.info("Actor {} monitor thread exiting", name);
                         return;
                     }
+                    var messagesToBeDelivered = new ArrayList<InternalMessage<M>>();
                     //Find new messages
-                    val newInOrderedMessages = messages.keySet()
+                    messages.keySet()
                             .stream()
                             .limit(this.maxConcurrency)
-                            .collect(Collectors.toSet());
-                    val newMessageIds = Set.copyOf(Sets.difference(newInOrderedMessages, inFlight));
-                    if (newMessageIds.isEmpty()) {
-                        if(inFlight.size() == this.maxConcurrency) {
-                            log.warn("Reached max concurrency:{}. Ignoring consumption till inflight messages are consumed",
-                                    this.maxConcurrency);
-                        }
-                        else {
-                            log.debug("No new messages. Neither is actor stopped. Ignoring spurious wakeup.");
-                        }
-                        continue;
-                    }
-                    inFlight.addAll(newMessageIds);
-                    val messagesToBeDelivered = newMessageIds.stream()
-                                    .map(messages::get)
-                                            .toList();
+                            .filter(id -> !inFlight.contains(id))
+                            .forEach(messageId -> {
+                                inFlight.add(messageId);
+                                messagesToBeDelivered.add(messages.get(messageId));
+                            });
                     messagesToBeDelivered.forEach(internalMessage -> actor.executorService.submit(() -> {
                         val id = internalMessage.getId();
                         try {
