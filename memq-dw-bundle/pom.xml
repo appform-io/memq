@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.appform.memq</groupId>
         <artifactId>memq</artifactId>
-        <version>0.1.6</version>
+        <version>0.1.6-R-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>memq-dw-bundle</artifactId>

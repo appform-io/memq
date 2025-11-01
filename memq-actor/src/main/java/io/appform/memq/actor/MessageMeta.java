@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class MessageMeta {
 
-    private AtomicInteger deliveryAttempt;
+    private final AtomicInteger deliveryAttempt;
     private final long publishedAt;
     private final long validTill;
     private final Map<String, Object> headers;

@@ -49,14 +49,14 @@ class ActorTest {
             a.start();
             val s = Stopwatch.createStarted();
             IntStream.rangeClosed(1, 10)
-                    .forEach(i -> IntStream.rangeClosed(1, 1_000)
+                    .forEach(i -> IntStream.rangeClosed(1, 1_000_00)
                             .forEach(j -> tp.submit(() -> a.publish(new TestIntMessage(1)))));
             Awaitility.await()
                     .timeout(Duration.ofMinutes(1))
                     .catchUncaughtExceptions()
                     .until(a::isEmpty);
             log.info("Test took {} ms", s.elapsed().toMillis());
-            assertEquals(10_000, sum.get());
+            assertEquals(10_00000, sum.get());
         }
         finally {
             tp.shutdownNow();
