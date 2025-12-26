@@ -327,9 +327,7 @@ public class Actor<M extends Message> implements IActor<M> {
             val id = internalMessage.getId();
             val message = internalMessage.getMessage();
             var status = false;
-            val attempt = new AtomicInteger(1);
-            var messageMeta = new MessageMeta(attempt,
-                    internalMessage.getPublishedAt(),
+            var messageMeta = new MessageMeta(internalMessage.getPublishedAt(),
                     internalMessage.getValidTill(),
                     internalMessage.getHeaders());
             try {
@@ -345,7 +343,7 @@ public class Actor<M extends Message> implements IActor<M> {
                 }
                 else {
                     status = actor.retryer.execute(() -> {
-                        messageMeta.updateAttempt(attempt.getAndIncrement());
+                        messageMeta.incrementAttempt();
                         return actor.consumerHandler.apply(message, messageMeta);
                     });
                     if (!status) {

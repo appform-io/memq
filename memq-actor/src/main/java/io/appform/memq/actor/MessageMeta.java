@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Getter
-@AllArgsConstructor
 public class MessageMeta {
 
     private AtomicInteger deliveryAttempt;
@@ -16,13 +15,20 @@ public class MessageMeta {
     private final long validTill;
     private final Map<String, Object> headers;
 
+    public MessageMeta(long publishedAt, long validTill, Map<String, Object> headers) {
+        this.deliveryAttempt = new AtomicInteger(0);
+        this.publishedAt = publishedAt;
+        this.validTill = validTill;
+        this.headers = headers;
+    }
+
     public boolean isRedelivered() {
         return deliveryAttempt.get() > 1;
     }
 
     //Private package function
-    void updateAttempt(int deliveryAttempt) {
-        this.deliveryAttempt.set(deliveryAttempt);
+    void incrementAttempt() {
+        this.deliveryAttempt.incrementAndGet();
     }
 
 

@@ -17,6 +17,8 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
 
     @Getter
     private final MessageType type;
+    @Getter
+    private final String name;
     protected final IActor<M> actor;
 
     @SuppressWarnings("unused")
@@ -24,7 +26,14 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
             MessageType type,
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem) {
-        this(type, highLevelActorConfig, actorSystem, null, List.of());
+        this(type.name(), type, highLevelActorConfig, actorSystem);
+    }
+
+    protected HighLevelActor(String name,
+            MessageType type,
+            HighLevelActorConfig highLevelActorConfig,
+            ActorSystem actorSystem) {
+        this(name, type, highLevelActorConfig, actorSystem, null, List.of());
     }
 
     protected HighLevelActor(
@@ -32,7 +41,15 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner) {
-        this(type, highLevelActorConfig, actorSystem, partitioner, List.of());
+        this(type.name(), type, highLevelActorConfig, actorSystem, partitioner);
+    }
+
+    protected HighLevelActor(String name,
+            MessageType type,
+            HighLevelActorConfig highLevelActorConfig,
+            ActorSystem actorSystem,
+            ToIntFunction<M> partitioner) {
+        this(name, type, highLevelActorConfig, actorSystem, partitioner, List.of());
     }
 
     protected HighLevelActor(
@@ -40,7 +57,15 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             List<ActorObserver> observers) {
-        this(type, highLevelActorConfig, actorSystem, null, observers);
+        this(type.name(), type, highLevelActorConfig, actorSystem, observers);
+    }
+
+    protected HighLevelActor(String name,
+            MessageType type,
+            HighLevelActorConfig highLevelActorConfig,
+            ActorSystem actorSystem,
+            List<ActorObserver> observers) {
+        this(name, type, highLevelActorConfig, actorSystem, null, observers);
     }
 
     protected HighLevelActor(
@@ -49,8 +74,18 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner,
             List<ActorObserver> observers) {
+        this(type.name(), type, highLevelActorConfig, actorSystem, partitioner, observers);
+    }
+
+    protected HighLevelActor(String name,
+            MessageType type,
+            HighLevelActorConfig highLevelActorConfig,
+            ActorSystem actorSystem,
+            ToIntFunction<M> partitioner,
+            List<ActorObserver> observers) {
         this.type = type;
-        this.actor = new Actor<>(type.name(),
+        this.name = name;
+        this.actor = new Actor<>(name,
                 actorSystem.createOrGetExecutorService(highLevelActorConfig),
                 actorSystem.expiryValidator(highLevelActorConfig),
                 this::handle,
@@ -61,7 +96,7 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
                 highLevelActorConfig.getMaxSizePerPartition(),
                 highLevelActorConfig.getMaxConcurrencyPerPartition(),
                 actorSystem.partitioner(highLevelActorConfig, partitioner),
-                actorSystem.observers(type.name(), highLevelActorConfig, observers));
+                actorSystem.observers(name, highLevelActorConfig, observers));
         actorSystem.register(actor);
     }
 

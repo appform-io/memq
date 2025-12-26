@@ -30,13 +30,6 @@ public class HierarchicalHighLevelActorTest {
     });
     private Map<FlowType, HierarchicalHighLevelActor<FlowType, ActionMessage>> actorActors;
 
-    enum HierarchicalHighLevelActorType {
-        C2M_AUTH_FLOW,
-        C2C_AUTH_FLOW;
-    }
-
-    static final int THREAD_POOL_SIZE = 10;
-
     @SneakyThrows
     public void createActors(ActorSystem actorSystem) {
         actorActors = RMQ_CONFIG.getWorkers()
