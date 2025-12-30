@@ -1,0 +1,23 @@
+workers:
+  FLOW_ONE:
+    executorName: sample.flow.actor.one
+    partitions: 1
+    children:
+      L1:
+        nodeData:
+          partitions: 1
+        children:
+          L1:
+            nodeData:
+              partitions: 2
+          L2:
+            nodeData:
+              partitions: 1
+  FLOW_TWO:
+    executorName: sample.flow.actor.two
+    partitions: 1
+    children:
+      L1:
+        nodeData:
+          partitions: 1
+

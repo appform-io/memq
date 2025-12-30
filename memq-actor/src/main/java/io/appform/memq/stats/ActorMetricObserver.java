@@ -2,7 +2,7 @@ package io.appform.memq.stats;
 
 
 import com.codahale.metrics.*;
-import io.appform.memq.actor.Actor;
+import io.appform.memq.actor.IActor;
 import io.appform.memq.actor.Message;
 import io.appform.memq.observer.ActorObserver;
 import io.appform.memq.observer.ActorObserverContext;
@@ -40,7 +40,7 @@ public class ActorMetricObserver extends ActorObserver {
     }
 
     @Override
-    public void initialize(Actor<? extends Message> actor) {
+    public void initialize(IActor<? extends Message> actor) {
         this.metricRegistry.gauge(MetricRegistry.name(getMetricPrefix(actorName), "size"),
                                   (MetricRegistry.MetricSupplier<Gauge<Long>>) () ->
                                           new CachedGauge<>(5, TimeUnit.SECONDS) {

@@ -2,6 +2,7 @@ package io.appform.memq;
 
 
 import io.appform.memq.actor.Actor;
+import io.appform.memq.actor.IActor;
 import io.appform.memq.actor.Message;
 import io.appform.memq.actor.MessageMeta;
 import io.appform.memq.observer.ActorObserver;
@@ -18,7 +19,7 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
     private final MessageType type;
     @Getter
     private final String name;
-    private final Actor<M> actor;
+    protected final IActor<M> actor;
 
     @SuppressWarnings("unused")
     protected HighLevelActor(
@@ -127,6 +128,10 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
 
     public final boolean isRunning() {
         return actor.isRunning();
+    }
+
+    public final void close() {
+        actor.close();
     }
 
 }
