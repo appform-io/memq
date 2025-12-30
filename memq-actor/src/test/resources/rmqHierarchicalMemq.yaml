@@ -1,23 +1,23 @@
 workers:
-  C2M_AUTH_FLOW:
-    executorName: prod.mandate.actors.c2m
+  FLOW_ONE:
+    executorName: sample.flow.actor.one
     partitions: 1
     children:
-      REGULAR:
+      L1:
         nodeData:
           partitions: 1
         children:
-          HOTSTAR:
+          L1:
             nodeData:
               partitions: 2
-          JAR:
+          L2:
             nodeData:
               partitions: 1
-  C2C_AUTH_FLOW:
-    executorName: prod.mandate.actors.c2c
+  FLOW_TWO:
+    executorName: sample.flow.actor.two
     partitions: 1
     children:
-      REGULAR:
+      L1:
         nodeData:
           partitions: 1
 

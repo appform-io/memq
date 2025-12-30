@@ -1,6 +1,7 @@
 package io.appform.memq.hierarchical;
 
 import io.appform.memq.ActorSystem;
+import io.appform.memq.HighLevelActor;
 import io.appform.memq.actor.Message;
 import io.appform.memq.actor.MessageMeta;
 import io.appform.memq.hierarchical.tree.HierarchicalDataStoreSupplierTree;
@@ -24,7 +25,7 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
 
     public static final RoutingKey EMPTY_ROUTING_KEY = RoutingKey.builder().build();
 
-    private final HierarchicalTreeConfig<HierarchialHighLevelActorConfig, String, HierarchicalOperationWorkerConfig> hierarchicalTreeConfig;
+    private final HierarchicalTreeConfig<HierarchicalActorConfig, String, HierarchicalSubActorConfig> hierarchicalTreeConfig;
     private final MessageType messageType;
     private final ActorSystem actorSystem;
     private final ToIntFunction<M> partitioner;
@@ -34,21 +35,21 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
 
     @Getter
     private HierarchicalDataStoreSupplierTree<
-            HierarchicalOperationWorkerConfig,
-            HierarchialHighLevelActorConfig,
+            HierarchicalSubActorConfig,
+            HierarchicalActorConfig,
             MessageType,
-            HierarchicalOperationWorker<MessageType, ? extends Message>> worker;
+            HighLevelActor<MessageType, ? extends Message>> worker;
 
 
     public HierarchicalActor(MessageType messageType,
-                             HierarchialHighLevelActorConfig hierarchicalActorConfig,
+                             HierarchicalActorConfig hierarchicalActorConfig,
                              ActorSystem actorSystem,
                              BiFunction<M, MessageMeta, Boolean> messageHandler,
                              BiConsumer<M, MessageMeta> sidelineHandler,
                              ToIntFunction<M> partitioner,
                              List<ActorObserver> observers) {
         this.messageType = messageType;
-        this.hierarchicalTreeConfig = new HierarchicalTreeConfig<>(hierarchicalActorConfig, hierarchicalActorConfig.getChildrenData());
+        this.hierarchicalTreeConfig = new HierarchicalTreeConfig<>(hierarchicalActorConfig, hierarchicalActorConfig.getChildren());
         this.actorSystem = actorSystem;
         this.messageHandler = messageHandler;
         this.sidelineHandler = sidelineHandler;
@@ -66,7 +67,7 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
     public void close() {
         log.info("Closing all workers");
         worker.traverse(hierarchicalOperationWorker -> {
-            log.info("Closing worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getRoutingKey().getRoutingKey());
+            log.info("Closing worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getName());
             hierarchicalOperationWorker.close();
         });
     }
@@ -75,7 +76,7 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
     public void purge() {
         log.info("Purging all workers");
         worker.traverse(hierarchicalOperationWorker -> {
-            log.info("Purging worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getRoutingKey().getRoutingKey());
+            log.info("Purging worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getName());
             hierarchicalOperationWorker.purge();
         });
     }
@@ -96,7 +97,7 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
         log.info("Size of all workers");
         val atomicLong = new AtomicLong();
         worker.traverse(hierarchicalOperationWorker -> {
-            log.info("Size of worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getRoutingKey().getRoutingKey());
+            log.info("Size of worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getName());
             atomicLong.getAndAdd(hierarchicalOperationWorker.size());
         });
         return atomicLong.get();
@@ -107,7 +108,7 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
         log.info("inFlight Size of all workers");
         val atomicLong = new AtomicLong();
         worker.traverse(hierarchicalOperationWorker -> {
-            log.info("inFlight Size of worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getRoutingKey().getRoutingKey());
+            log.info("inFlight Size of worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getName());
             atomicLong.getAndAdd(hierarchicalOperationWorker.inFlight());
         });
         return atomicLong.get();
@@ -118,7 +119,7 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
         log.info("isEmpty all workers");
         val atomicBoolean = new AtomicBoolean();
         worker.traverse(hierarchicalOperationWorker -> {
-            log.info("isEmpty worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getRoutingKey().getRoutingKey());
+            log.info("isEmpty worker: {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getName());
             atomicBoolean.set(atomicBoolean.get() && hierarchicalOperationWorker.isEmpty());
         });
         return atomicBoolean.get();
@@ -129,33 +130,44 @@ public class HierarchicalActor<MessageType extends Enum<MessageType>, M extends 
         log.info("isRunning all workers");
         val atomicBoolean = new AtomicBoolean();
         worker.traverse(hierarchicalOperationWorker -> {
-            log.info("isRunning worker: {} {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getRoutingKey().getRoutingKey(), hierarchicalOperationWorker.isRunning());
+            log.info("isRunning worker: {} {} {}", hierarchicalOperationWorker.getType(), hierarchicalOperationWorker.getName(), hierarchicalOperationWorker.isRunning());
             atomicBoolean.set(atomicBoolean.get() && hierarchicalOperationWorker.isRunning());
         });
         return atomicBoolean.get();
     }
 
-    private HierarchicalOperationWorker<MessageType, Message> publishActor(final HierarchicalRoutingKey<String> routingKey) {
-        return (HierarchicalOperationWorker<MessageType, Message>) this.worker.get(messageType, routingKey);
+    private HighLevelActor<MessageType, Message> publishActor(final HierarchicalRoutingKey<String> routingKey) {
+        return (HighLevelActor<MessageType, Message>) this.worker.get(messageType, routingKey);
     }
 
     private void initializeRouter() {
+        val hierarchicalRouterHelper = new HierarchicalRouterHelper();
         this.worker = new HierarchicalDataStoreSupplierTree<>(
                 messageType,
                 hierarchicalTreeConfig,
-                HierarchicalRouterUtils.actorConfigToWorkerConfigFunc,
+                hierarchicalRouterHelper.actorConfigToSubActorConfigFunc,
                 (routingKey, messageTypeKey, workerConfig) -> {
                     log.info("{} -> {}", routingKey.getRoutingKey(), messageTypeKey);
-                    return new HierarchicalOperationWorker<>(
+                    val subActorConfig = hierarchicalRouterHelper.hierarchicalActorConfig(messageTypeKey, routingKey, workerConfig, hierarchicalTreeConfig.getDefaultData());
+                    return new HighLevelActor<MessageType, M>(
+                            subActorConfig.getExecutorName(),
                             messageType,
-                            workerConfig,
-                            hierarchicalTreeConfig.getDefaultData(),
-                            routingKey,
+                            subActorConfig,
                             actorSystem,
-                            messageHandler,
-                            sidelineHandler,
                             partitioner,
-                            observers);
+                            observers) {
+
+                        @Override
+                        protected boolean handle(M message, MessageMeta messageMeta) {
+                            return messageHandler.apply(message, messageMeta);
+                        }
+
+                        @Override
+                        protected void sideline(M message, MessageMeta messageMeta) {
+                            sidelineHandler.accept(message, messageMeta);
+                        }
+
+                    };
                 }
         );
     }

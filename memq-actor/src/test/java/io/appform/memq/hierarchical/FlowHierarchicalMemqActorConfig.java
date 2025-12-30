@@ -12,5 +12,5 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FlowHierarchicalMemqActorConfig<MessageType extends Enum<MessageType>> {
-    private Map<MessageType, HierarchialHighLevelActorConfig> workers;
+    private Map<MessageType, HierarchicalActorConfig> workers;
 }

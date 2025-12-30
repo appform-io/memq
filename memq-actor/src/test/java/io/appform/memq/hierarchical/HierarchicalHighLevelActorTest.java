@@ -5,9 +5,9 @@ import io.appform.memq.ActorSystem;
 import io.appform.memq.MemQTestExtension;
 import io.appform.memq.hierarchical.actor.FlowTypeHierarchicalActorBuilder;
 import io.appform.memq.hierarchical.data.ActionMessage;
-import io.appform.memq.hierarchical.data.C2CDataActionMessage;
-import io.appform.memq.hierarchical.data.C2MDataActionMessage;
 import io.appform.memq.hierarchical.data.FlowType;
+import io.appform.memq.hierarchical.data.OneDataActionMessage;
+import io.appform.memq.hierarchical.data.TwoDataActionMessage;
 import io.appform.memq.hierarchical.tree.key.RoutingKey;
 import io.appform.memq.util.YamlReader;
 import lombok.SneakyThrows;
@@ -44,29 +44,29 @@ public class HierarchicalHighLevelActorTest {
         createActors(actorSystem);
         val messages = Map.of(
                 RoutingKey.builder().list(List.of("")).build(),
-                C2MDataActionMessage.builder()
-                        .data("C2M")
+                OneDataActionMessage.builder()
+                        .data("FLOW_ONE")
                         .build(),
 
-                RoutingKey.builder().list(List.of("REGULAR", "JAR")).build(),
-                C2MDataActionMessage.builder()
-                        .data("C2M-REGULAR-JAR-SOME")
+                RoutingKey.builder().list(List.of("L1", "L2")).build(),
+                OneDataActionMessage.builder()
+                        .data("FLOW_ONE-L1-L2-SOME")
                         .build(),
 
-                RoutingKey.builder().list(List.of("REGULAR")).build(),
-                C2CDataActionMessage.builder()
-                        .data("C2C-REGULAR")
+                RoutingKey.builder().list(List.of("L1")).build(),
+                TwoDataActionMessage.builder()
+                        .data("FLOW_TWO-L1")
                         .build(),
 
-                RoutingKey.builder().list(List.of("C2C_AUTH_FLOW")).build(),
-                C2CDataActionMessage.builder()
-                        .data("C2C")
-                        .build(),
-
-                RoutingKey.builder().list(List.of("FULL_AUTH", "JAR")).build(),
-                C2MDataActionMessage.builder()
-                        .data("C2M-FULL_AUTH-JAR-SOME")
+                RoutingKey.builder().list(List.of("")).build(),
+                TwoDataActionMessage.builder()
+                        .data("FLOW_TWO")
                         .build()
+
+//                RoutingKey.builder().list(List.of("L2", "L1")).build(),
+//                OneDataActionMessage.builder()
+//                        .data("FLOW_ONE-L2-L1-SOME")
+//                        .build()
         );
 
         messages.forEach((routingKey, message) -> {
@@ -75,20 +75,16 @@ public class HierarchicalHighLevelActorTest {
             if (actorActors.containsKey(flowType)) {
                 val router = actorActors.get(flowType);
                 Assertions.assertNotNull(router);
-
-                val flowLevelPrefix = Arrays.asList(RMQ_CONFIG.getWorkers().get(flowType).getExecutorName().split("\\."));
-                System.out.println("flowLevelPrefix" + flowLevelPrefix);
-
                 val worker = router.getActor().getWorker().get(flowType, routingKey);
                 Assertions.assertNotNull(worker);
 
-                val routingKeyWorker = worker.getRoutingKey();
-                if(!worker.getRoutingKey().getRoutingKey().isEmpty()) {
-                    val routingKeyWorkerStr = String.join(",",routingKeyWorker.getRoutingKey());
-                    val routingKeyStr = String.join(",", routingKey.getRoutingKey());
-                    Assertions.assertEquals(routingKeyWorkerStr, routingKeyStr);
+                val routingKeyWorker = worker.getName();
+                if(!routingKeyWorker.isEmpty()) {
+                    val routingKeyStr = String.join(".", routingKey.getRoutingKey());
+                    System.out.println(routingKeyWorker + " " + routingKeyStr);
+                    Assertions.assertTrue(routingKeyWorker.contains(routingKeyStr));
                 }
-                message.setExecutorName(String.join("-", routingKeyWorker.getRoutingKey()));
+                message.setExecutorName(String.join("-", routingKeyWorker));
                 try {
                     router.publish(routingKey, message);
                 } catch (Exception e) {

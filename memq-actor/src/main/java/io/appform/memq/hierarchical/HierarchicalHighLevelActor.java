@@ -24,14 +24,14 @@ public abstract class HierarchicalHighLevelActor<MessageType extends Enum<Messag
     @SuppressWarnings("unused")
     protected HierarchicalHighLevelActor(
             MessageType type,
-            HierarchialHighLevelActorConfig highLevelActorConfig,
+            HierarchicalActorConfig highLevelActorConfig,
             ActorSystem actorSystem) {
         this(type, highLevelActorConfig, actorSystem, null, List.of());
     }
 
     protected HierarchicalHighLevelActor(
             MessageType type,
-            HierarchialHighLevelActorConfig highLevelActorConfig,
+            HierarchicalActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner) {
         this(type, highLevelActorConfig, actorSystem, partitioner, List.of());
@@ -39,7 +39,7 @@ public abstract class HierarchicalHighLevelActor<MessageType extends Enum<Messag
 
     protected HierarchicalHighLevelActor(
             MessageType type,
-            HierarchialHighLevelActorConfig highLevelActorConfig,
+            HierarchicalActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             List<ActorObserver> observers) {
         this(type, highLevelActorConfig, actorSystem, null, observers);
@@ -47,7 +47,7 @@ public abstract class HierarchicalHighLevelActor<MessageType extends Enum<Messag
 
     protected HierarchicalHighLevelActor(
             MessageType type,
-            HierarchialHighLevelActorConfig highLevelActorConfig,
+            HierarchicalActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner,
             List<ActorObserver> observers) {

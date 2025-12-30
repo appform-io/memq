@@ -130,4 +130,8 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
         return actor.isRunning();
     }
 
+    public final void close() {
+        actor.close();
+    }
+
 }

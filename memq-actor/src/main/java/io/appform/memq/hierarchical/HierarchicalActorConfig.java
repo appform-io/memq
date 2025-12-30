@@ -14,16 +14,16 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-public class HierarchialHighLevelActorConfig extends HighLevelActorConfig {
+public class HierarchicalActorConfig extends HighLevelActorConfig {
 
     /**
-     * <p>This param will reused all Parent Level ActorConfig while creating all child actors,
-     * if marked as false, every children will need tp provide Actor config specific to child</p>
+     * <p>This param will reuse all Parent Level ActorConfig while creating all child actors,
+     * if marked as false, every child will need tp provide Actor config specific to child</p>
      *
      */
     private boolean useParentConfigInWorker = true;
 
     @JsonUnwrapped
-    private HierarchicalDataStoreTreeNode<String, HierarchicalOperationWorkerConfig> childrenData;
+    private HierarchicalDataStoreTreeNode<String, HierarchicalSubActorConfig> children;
 
 }

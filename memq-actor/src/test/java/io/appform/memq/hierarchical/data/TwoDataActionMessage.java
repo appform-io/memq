@@ -8,15 +8,15 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class C2MDataActionMessage extends ActionMessage {
+public class TwoDataActionMessage extends ActionMessage {
     private String data;
 
-    public C2MDataActionMessage() {
-        super(FlowType.C2M_AUTH_FLOW);
+    public TwoDataActionMessage() {
+        super(FlowType.FLOW_TWO);
     }
 
     @Builder
-    public C2MDataActionMessage(String data) {
+    public TwoDataActionMessage(String data) {
         this();
         this.data = data;
     }
@@ -25,4 +25,5 @@ public class C2MDataActionMessage extends ActionMessage {
     public String id() {
         return data;
     }
+
 }

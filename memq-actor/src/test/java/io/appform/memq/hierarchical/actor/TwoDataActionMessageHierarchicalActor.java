@@ -2,23 +2,23 @@ package io.appform.memq.hierarchical.actor;
 
 import io.appform.memq.ActorSystem;
 import io.appform.memq.actor.MessageMeta;
-import io.appform.memq.hierarchical.HierarchialHighLevelActorConfig;
+import io.appform.memq.hierarchical.HierarchicalActorConfig;
 import io.appform.memq.hierarchical.HierarchicalHighLevelActor;
 import io.appform.memq.hierarchical.data.ActionMessage;
 import io.appform.memq.hierarchical.data.FlowType;
 
 
-public class C2CDataActionMessageHierarchicalActor extends HierarchicalHighLevelActor<FlowType, ActionMessage> {
+public class TwoDataActionMessageHierarchicalActor extends HierarchicalHighLevelActor<FlowType, ActionMessage> {
 
 
-    public C2CDataActionMessageHierarchicalActor(final HierarchialHighLevelActorConfig hierarchicalTreeConfig,
+    public TwoDataActionMessageHierarchicalActor(final HierarchicalActorConfig hierarchicalTreeConfig,
                                                  final ActorSystem actorSystem) {
-        super(FlowType.C2C_AUTH_FLOW, hierarchicalTreeConfig, actorSystem);
+        super(FlowType.FLOW_TWO, hierarchicalTreeConfig, actorSystem);
     }
 
     @Override
     protected boolean handle(ActionMessage actionMessage, MessageMeta messageMetadata) {
-        System.out.println("C2C : " + actionMessage);
+        System.out.println("FLOW_TWO : " + actionMessage);
         return true;
     }
 }

@@ -24,7 +24,7 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class HierarchicalOperationWorkerConfig {
+public class HierarchicalSubActorConfig {
 
     @Min(1)
     @Max(100)
