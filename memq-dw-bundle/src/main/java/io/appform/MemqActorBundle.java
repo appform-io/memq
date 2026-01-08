@@ -18,8 +18,6 @@ public abstract class MemqActorBundle<T extends Configuration> implements Config
 
     @Getter
     private MemqActorSystem memqActorSystem;
-    private MemqConfig memqConfig;
-    private ExecutorServiceProvider executorServiceProvider;
     private final List<ActorObserver> observers = new ArrayList<>();
 
     protected MemqActorBundle() {
@@ -36,12 +34,12 @@ public abstract class MemqActorBundle<T extends Configuration> implements Config
 
     @Override
     public void run(T t, Environment environment) {
-        this.memqConfig = config(t);
+        MemqConfig memqConfig = config(t);
         Objects.requireNonNull(memqConfig, "Null memq config provided");
-        this.executorServiceProvider = executorServiceProvider(t);
-        Objects.requireNonNull(this.executorServiceProvider, "Null executor service provider provided");
-        this.memqActorSystem = new MemqActorSystem(this.memqConfig,
-                                                   this.executorServiceProvider,
+        ExecutorServiceProvider executorServiceProvider = executorServiceProvider(t);
+        Objects.requireNonNull(executorServiceProvider, "Null executor service provider provided");
+        this.memqActorSystem = new MemqActorSystem(memqConfig,
+                                                   executorServiceProvider,
                                                    this.observers,
                                                    environment.metrics());
         environment.lifecycle().manage(memqActorSystem);

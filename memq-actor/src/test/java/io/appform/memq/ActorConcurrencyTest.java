@@ -23,11 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-public class ActorConcurrencyTest {
+class ActorConcurrencyTest {
 
     @Test
     @SneakyThrows
-    public void testMaxConcurrencyAsyncDispactcher() {
+    void testMaxConcurrencyAsyncDispactcher() {
         val concurrency = ThreadLocalRandom.current().nextInt(1, 5);
         val metricPrefix = "actor." + TestUtil.HighLevelActorType.BLOCKING_ACTOR.name() + ".";
         val counter = new AtomicInteger();
@@ -58,7 +58,7 @@ public class ActorConcurrencyTest {
 
     @Test
     @SneakyThrows
-    public void testMaxConcurrencySyncDispatcher() {
+    void testMaxConcurrencySyncDispatcher() {
         val concurrency = ThreadLocalRandom.current().nextInt(1, 5);
         val metricPrefix = "actor." + TestUtil.HighLevelActorType.BLOCKING_ACTOR.name() + ".";
         val counter = new AtomicInteger();

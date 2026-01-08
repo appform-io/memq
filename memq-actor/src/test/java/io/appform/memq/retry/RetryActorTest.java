@@ -22,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RetryActorTest {
 
-    static int MAX_RETRY_COUNT = 6;
-    static int MAX_RETRY_TIME = 3_000;
-    static int MAX_NUMBER_OF_EXCEPTIONS = 2;
+    final static int MAX_RETRY_COUNT = 6;
+    final static int MAX_RETRY_TIME = 3_000;
+    final static int MAX_NUMBER_OF_EXCEPTIONS = 2;
 
     @Test
     void testCountLimitedExponentialWaitRetry() {

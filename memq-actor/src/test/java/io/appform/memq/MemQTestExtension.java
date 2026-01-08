@@ -28,6 +28,7 @@ public class MemQTestExtension implements BeforeEachCallback, AfterEachCallback,
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
+        // No-op: Initialization is handled by ParameterResolver in test template invocation context
     }
 
     @Override
@@ -38,10 +39,10 @@ public class MemQTestExtension implements BeforeEachCallback, AfterEachCallback,
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext extensionContext) {
         return Arrays.stream(DispatcherType.values())
-                .map(dispatcherType -> createContext(dispatcherType, extensionContext));
+                .map(this::createContext);
     }
 
-    private TestTemplateInvocationContext createContext(DispatcherType dispatcherType, ExtensionContext extensionContext) {
+    private TestTemplateInvocationContext createContext(DispatcherType dispatcherType) {
         return new TestTemplateInvocationContext() {
             @Override
             public String getDisplayName(int invocationIndex) {

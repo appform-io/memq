@@ -12,31 +12,31 @@ import java.util.List;
 import java.util.function.ToIntFunction;
 
 @Slf4j
-public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M extends Message> {
+public abstract class HighLevelActor<T extends Enum<T>, M extends Message> {
 
     @Getter
-    private final MessageType type;
+    private final T type;
     @Getter
     private final String name;
     private final Actor<M> actor;
 
     @SuppressWarnings("unused")
     protected HighLevelActor(
-            MessageType type,
+            T type,
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem) {
         this(type.name(), type, highLevelActorConfig, actorSystem);
     }
 
     protected HighLevelActor(String name,
-            MessageType type,
+            T type,
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem) {
         this(name, type, highLevelActorConfig, actorSystem, null, List.of());
     }
 
     protected HighLevelActor(
-            MessageType type,
+            T type,
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner) {
@@ -44,7 +44,7 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
     }
 
     protected HighLevelActor(String name,
-            MessageType type,
+            T type,
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner) {
@@ -52,7 +52,7 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
     }
 
     protected HighLevelActor(
-            MessageType type,
+            T type,
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             List<ActorObserver> observers) {
@@ -60,7 +60,7 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
     }
 
     protected HighLevelActor(String name,
-            MessageType type,
+            T type,
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             List<ActorObserver> observers) {
@@ -68,7 +68,7 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
     }
 
     protected HighLevelActor(
-            MessageType type,
+            T type,
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner,
@@ -77,7 +77,7 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
     }
 
     protected HighLevelActor(String name,
-            MessageType type,
+            T type,
             HighLevelActorConfig highLevelActorConfig,
             ActorSystem actorSystem,
             ToIntFunction<M> partitioner,

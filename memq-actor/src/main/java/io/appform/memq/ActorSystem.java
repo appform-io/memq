@@ -55,7 +55,7 @@ public interface ActorSystem extends AutoCloseable {
         return updatedObservers;
     }
 
-    default <M extends Message> BiFunction<M, MessageMeta, Boolean> expiryValidator(HighLevelActorConfig highLevelActorConfig) {
+    default <M extends Message> BiPredicate<M, MessageMeta> expiryValidator(HighLevelActorConfig highLevelActorConfig) {
         return (message, messageMeta) -> messageMeta.getValidTill() > System.currentTimeMillis();
     }
 
@@ -80,10 +80,15 @@ public interface ActorSystem extends AutoCloseable {
     default <M extends Message> ToIntFunction<M> partitioner(
             HighLevelActorConfig highLevelActorConfig,
             ToIntFunction<M> partitioner) {
-        return partitioner != null ? partitioner
-                                   : highLevelActorConfig.getPartitions() == Constants.SINGLE_PARTITION
-                                     ? message -> Constants.DEFAULT_PARTITION_INDEX
-                                     : message -> Math.absExact(message.id().hashCode()) % highLevelActorConfig.getPartitions();
+        if (partitioner != null) {
+            return partitioner;
+        }
+
+        if (highLevelActorConfig.getPartitions() == Constants.SINGLE_PARTITION) {
+            return message -> Constants.DEFAULT_PARTITION_INDEX;
+        }
+
+        return message -> Math.absExact(message.id().hashCode()) % highLevelActorConfig.getPartitions();
     }
 
 }
