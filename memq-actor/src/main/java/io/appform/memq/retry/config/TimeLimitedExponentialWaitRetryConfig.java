@@ -1,11 +1,11 @@
 package io.appform.memq.retry.config;
 
 import io.appform.memq.retry.RetryType;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.extern.jackson.Jacksonized;
 
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.Min;
 import java.util.Set;
 
 @Value

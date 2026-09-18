@@ -23,7 +23,11 @@ import java.util.Set;
         @JsonSubTypes.Type(name = "TIME_LIMITED_FIXED_WAIT", value = TimeLimitedFixedWaitRetryConfig.class),
         @JsonSubTypes.Type(name = "TIME_LIMITED_INCREMENTAL_WAIT", value = TimeLimitedRandomWaitRetryConfig.class)
 })
-public abstract class RetryConfig {
+public sealed abstract class RetryConfig
+        permits CountLimitedExponentialWaitRetryConfig, CountLimitedFixedWaitRetryConfig,
+                CountLimitedRandomWaitRetryConfig, NoRetryConfig,
+                TimeLimitedExponentialWaitRetryConfig, TimeLimitedFixedWaitRetryConfig,
+                TimeLimitedRandomWaitRetryConfig {
     private final RetryType type;
 
     private Set<String> retriableExceptions;

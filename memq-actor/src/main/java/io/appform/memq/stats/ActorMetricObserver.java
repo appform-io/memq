@@ -66,20 +66,20 @@ public class ActorMetricObserver extends ActorObserver {
 
     private boolean metered(ActorObserverContext<? extends Message> context, BooleanSupplier supplier) {
         val metricData = getMetricData(context);
-        metricData.getTotal().mark();
-        val timer = metricData.getTimer().time();
+        metricData.total().mark();
+        val timer = metricData.timer().time();
         try {
             val ret = proceed(context, supplier);
             if(ret) {
-                metricData.getSuccess().mark();
+                metricData.success().mark();
             }
             else {
-                metricData.getFailed().mark();
+                metricData.failed().mark();
             }
             return ret;
         }
         catch (Throwable t) {
-            metricData.getFailed().mark();
+            metricData.failed().mark();
             throw t;
         }
         finally {
@@ -88,26 +88,22 @@ public class ActorMetricObserver extends ActorObserver {
     }
 
     private MetricData getMetricData(final ActorObserverContext<? extends Message> context) {
-        val metricKeyData = MetricKeyData.builder()
-                .actorName(actorName)
-                .operation(context.getOperation().name())
-                .build();
+        val metricKeyData = new MetricKeyData(actorName, context.getOperation().name());
         return metricCache.computeIfAbsent(metricKeyData, key ->
                 getMetricData(getMetricPrefix(metricKeyData)));
     }
 
     private MetricData getMetricData(final String metricPrefix) {
-        return MetricData.builder()
-                .timer(metricRegistry.timer(MetricRegistry.name(metricPrefix, "latency"),
-                                            () -> new Timer(new SlidingTimeWindowArrayReservoir(60, TimeUnit.SECONDS))))
-                .success(metricRegistry.meter(MetricRegistry.name(metricPrefix, "success")))
-                .failed(metricRegistry.meter(MetricRegistry.name(metricPrefix, "failed")))
-                .total(metricRegistry.meter(MetricRegistry.name(metricPrefix, "total")))
-                .build();
+        return new MetricData(
+                metricRegistry.meter(MetricRegistry.name(metricPrefix, "total")),
+                metricRegistry.meter(MetricRegistry.name(metricPrefix, "success")),
+                metricRegistry.meter(MetricRegistry.name(metricPrefix, "failed")),
+                metricRegistry.timer(MetricRegistry.name(metricPrefix, "latency"),
+                                     () -> new Timer(new SlidingTimeWindowArrayReservoir(60, TimeUnit.SECONDS))));
     }
 
     private String getMetricPrefix(final MetricKeyData metricKeyData) {
-        return getMetricPrefix(actorName, metricKeyData.getOperation());
+        return getMetricPrefix(actorName, metricKeyData.operation());
     }
 
     private String getMetricPrefix(String... metricNames) {

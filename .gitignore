@@ -25,6 +25,9 @@ hs_err_pid*
 *.ipr
 *.iml
 venv
+.project
+.factorypath
+.classpath
 
 ## Plugin-specific files:
 
@@ -90,3 +93,9 @@ out.*
 */creds.sh
 .run
 build*
+
+# Agents
+.pi/
+.planning/
+.settings/
+config.json

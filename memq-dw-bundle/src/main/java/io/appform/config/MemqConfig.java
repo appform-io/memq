@@ -1,10 +1,9 @@
 package io.appform.config;
 
+import jakarta.validation.Valid;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
-
-import javax.validation.Valid;
 import java.util.List;
 
 @Value

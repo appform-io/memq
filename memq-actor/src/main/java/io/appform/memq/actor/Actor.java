@@ -1,6 +1,5 @@
 package io.appform.memq.actor;
 
-import com.google.common.base.Preconditions;
 import io.appform.memq.observer.ActorObserver;
 import io.appform.memq.observer.ActorObserverContext;
 import io.appform.memq.observer.ObserverMessageMeta;
@@ -64,9 +63,12 @@ public class Actor<M extends Message> implements AutoCloseable {
         // Switch ensures validation is performed for all dispatcher types.
         // Adding a new DispatcherType will cause a compile error here if not handled.
         switch (dispatcherType){
-            case SYNC ->
-                    Preconditions.checkArgument( maxConcurrencyPerPartition == maxSizePerPartition,
-                    "Max Queue size and max concurrency has to be same for sync dispatcher");
+            case SYNC -> {
+                if (maxConcurrencyPerPartition != maxSizePerPartition) {
+                    throw new IllegalArgumentException(
+                            "Max Queue size and max concurrency has to be same for sync dispatcher");
+                }
+            }
             case ASYNC_ISOLATED -> {
                 // No-op: ASYNC_ISOLATED dispatcher has no specific validation requirements
             }
@@ -136,11 +138,11 @@ public class Actor<M extends Message> implements AutoCloseable {
     }
 
    void processWithObserver(final InternalMessage<M> internalMessage) {
-        val observerMessageMeta = new ObserverMessageMeta(internalMessage.getId(), internalMessage.getPublishedAt(),
-                internalMessage.getValidTill());
+        val observerMessageMeta = new ObserverMessageMeta(internalMessage.id(), internalMessage.publishedAt(),
+                internalMessage.validTill());
         this.rootObserver.execute(ActorObserverContext.builder()
                         .messageMeta(observerMessageMeta)
-                        .message(internalMessage.getMessage())
+                        .message(internalMessage.message())
                         .operation(ActorOperation.CONSUME)
                         .actorName(this.name)
                         .build(),
@@ -160,12 +162,12 @@ public class Actor<M extends Message> implements AutoCloseable {
     }
 
     private boolean process(final InternalMessage<M> internalMessage) {
-        val id = internalMessage.getId();
-        val message = internalMessage.getMessage();
+        val id = internalMessage.id();
+        val message = internalMessage.message();
         var status = false;
-        var messageMeta = new MessageMeta(internalMessage.getPublishedAt(),
-                internalMessage.getValidTill(),
-                internalMessage.getHeaders());
+        var messageMeta = new MessageMeta(internalMessage.publishedAt(),
+                internalMessage.validTill(),
+                internalMessage.headers());
         try {
             val valid = this.rootObserver.execute(ActorObserverContext.builder()
                             .message(message)
@@ -177,23 +179,21 @@ public class Actor<M extends Message> implements AutoCloseable {
                 log.debug("Message validation failed for message: {}", message);
                 return false;
             }
-            else {
-                status = this.retryer.execute(() -> {
-                    messageMeta.incrementAttempt();
-                    return this.consumerHandler.test(message, messageMeta);
-                });
-                if (!status) {
-                    log.debug("Consumer failed for message: {}", message);
-                    this.rootObserver.execute(ActorObserverContext.builder()
-                                    .message(message)
-                                    .operation(ActorOperation.SIDELINE)
-                                    .actorName(this.name)
-                                    .build(),
-                            () -> {
-                                this.sidelineHandler.accept(message, messageMeta);
-                                return true;
-                            });
-                }
+            status = this.retryer.execute(() -> {
+                messageMeta.incrementAttempt();
+                return this.consumerHandler.test(message, messageMeta);
+            });
+            if (!status) {
+                log.debug("Consumer failed for message: {}", message);
+                this.rootObserver.execute(ActorObserverContext.builder()
+                                .message(message)
+                                .operation(ActorOperation.SIDELINE)
+                                .actorName(this.name)
+                                .build(),
+                        () -> {
+                            this.sidelineHandler.accept(message, messageMeta);
+                            return true;
+                        });
             }
         } catch (Exception e) {
             log.error("Error processing message : " + id, e);

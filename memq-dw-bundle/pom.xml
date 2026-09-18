@@ -5,24 +5,32 @@
     <parent>
         <groupId>io.appform.memq</groupId>
         <artifactId>memq</artifactId>
-        <version>0.1.8</version>
+        <version>5.0.2-0-1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>memq-dw-bundle</artifactId>
     <name>MemQ Actors Bundle for Dropwizard 2x</name>
-    <version>2.1.10-0-8</version>
+    <version>5.0.2-0-1</version>
     <properties>
-        <dropwizard.version>2.1.10</dropwizard.version>
+        <dropwizard.version>5.0.2</dropwizard.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>io.dropwizard</groupId>
-                <artifactId>dropwizard-dependencies</artifactId>
-                <version>${dropwizard.version}</version>
+                <artifactId>dropwizard-bom</artifactId>
                 <type>pom</type>
                 <scope>import</scope>
+                <version>${dropwizard.version}</version>
+            </dependency>
+            <!-- Dropwizard Dependencies for transitive deps like hibernate-core -->
+            <dependency>
+                <groupId>io.dropwizard</groupId>
+                <artifactId>dropwizard-dependencies</artifactId>
+                <type>pom</type>
+                <scope>import</scope>
+                <version>${dropwizard.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

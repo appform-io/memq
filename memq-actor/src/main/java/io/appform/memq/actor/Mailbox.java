@@ -88,7 +88,7 @@ class Mailbox<M extends Message> implements AutoCloseable {
             }
             val internalMessage = new InternalMessage<>(message.id(), message.validTill(),
                     System.currentTimeMillis(), message.headers(), message);
-            messages.putIfAbsent(internalMessage.getId(), internalMessage);
+            messages.putIfAbsent(internalMessage.id(), internalMessage);
             actor.getMessageDispatcher().triggerDispatch(this);
             return true;
         } finally {

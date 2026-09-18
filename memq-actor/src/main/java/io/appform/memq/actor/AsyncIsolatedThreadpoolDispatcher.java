@@ -27,9 +27,9 @@ class AsyncIsolatedThreadpoolDispatcher<M extends Message> implements Dispatcher
     //Always executed inside mailbox lock
     @Override
     public final void deRegister(final Mailbox<M> inMailbox) {
-        if(registeredMailboxWorker.containsKey(inMailbox.getPartition())) {
-            registeredMailboxWorker.get(inMailbox.getPartition()).close();
-            registeredMailboxWorker.remove(inMailbox.getPartition());
+        val worker = registeredMailboxWorker.remove(inMailbox.getPartition());
+        if (worker != null) {
+            worker.close();
         }
     }
 

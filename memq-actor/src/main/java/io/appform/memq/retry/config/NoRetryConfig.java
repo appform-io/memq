@@ -9,7 +9,7 @@ import lombok.extern.jackson.Jacksonized;
  */
 @Builder
 @Jacksonized
-public class NoRetryConfig extends RetryConfig {
+public final class NoRetryConfig extends RetryConfig {
     public NoRetryConfig() {
         super(RetryType.NO_RETRY);
     }
