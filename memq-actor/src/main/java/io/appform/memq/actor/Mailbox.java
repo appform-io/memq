@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -22,7 +21,7 @@ class Mailbox<M extends Message> implements AutoCloseable {
     private final Map<String, InternalMessage<M>> messages = new LinkedHashMap<>();
     private final Set<String> inFlight = new HashSet<>();
     private final ReentrantLock lock = new ReentrantLock();
-    private AtomicBoolean closed = new AtomicBoolean(false);
+    private boolean closed = false; //Gaurded by lock
 
     public Mailbox(Actor<M> actor, int partition, long maxSize, int maxConcurrency) {
         this.actor = actor;
@@ -102,7 +101,7 @@ class Mailbox<M extends Message> implements AutoCloseable {
     public final void close() {
         acquireLock();
         try {
-            closed.set(true);
+            closed = true;
             actor.getMessageDispatcher().deRegister(this);
         }
         finally {
@@ -130,7 +129,7 @@ class Mailbox<M extends Message> implements AutoCloseable {
             inFlight.remove(id);
             messages.remove(id);
             //Wake dispatcher only if a slot freed up from saturation
-            if (wasSaturated && !closed.get()) {
+            if (wasSaturated && !closed) {
                 actor.getMessageDispatcher().triggerDispatch(this);
             }
         }

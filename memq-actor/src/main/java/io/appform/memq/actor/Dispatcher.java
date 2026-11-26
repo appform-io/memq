@@ -20,16 +20,17 @@ interface Dispatcher<M extends Message> extends AutoCloseable {
 
     //Always executed inside mailbox lock
     default void dispatch(final Mailbox<M> mailbox) {
-        //Check if we have reached max concurrency. If yes, ignore dispatching new messages
-        if (mailbox.getInFlight().size() >= mailbox.getMaxConcurrency()) {
-            log.warn("Mailbox:{} reached max concurrency:{}. Ignoring consumption till inflight messages are consumed",
-                    mailbox.getName(), mailbox.getMaxConcurrency());
+        val maxConcurrency = mailbox.getMaxConcurrency();
+        //Check if we have reached max concurrency. If yes, pause dispatching new messages
+        if (mailbox.getInFlight().size() >= maxConcurrency) {
+            log.warn("Mailbox:{} reached max concurrency:{}. Pausing consumption till inflight messages are consumed",
+                    mailbox.getName(), maxConcurrency);
             return;
         }
         //Find new messages
         val newInOrderedMessages = mailbox.getMessages().keySet()
                 .stream()
-                .limit(mailbox.getMaxConcurrency())
+                .limit(maxConcurrency)
                 .collect(Collectors.toSet());
         val newMessageIds = Set.copyOf(Sets.difference(newInOrderedMessages, mailbox.getInFlight()));
         if (newMessageIds.isEmpty()) {

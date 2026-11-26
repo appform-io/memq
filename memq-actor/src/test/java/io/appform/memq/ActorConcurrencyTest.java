@@ -116,8 +116,6 @@ class ActorConcurrencyTest {
             Awaitility.await()
                     .timeout(Duration.ofSeconds(10))
                     .until(() -> actor.inFlight() == POOL_SIZE);
-            //Give dispatcher a chance to over-dispatch, if it would
-            Thread.sleep(200);
             assertEquals(POOL_SIZE, actor.inFlight());
 
             blockConsume.set(false);

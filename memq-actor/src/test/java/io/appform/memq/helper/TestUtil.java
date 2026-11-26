@@ -85,8 +85,7 @@ public class TestUtil {
             public int maxConcurrencyPerPartition(HighLevelActorConfig highLevelActorConfig) {
                 //SYNC dispatcher requires maxConcurrency == maxSize, so cap is not applicable
                 if (dispatcherType != DispatcherType.SYNC && tp instanceof ThreadPoolExecutor tpe) {
-                    //Floor so that sum across partitions never exceeds pool size (min 1 per partition)
-                    val perPartition = Math.max(1, tpe.getMaximumPoolSize() / highLevelActorConfig.getPartitions());
+                    val perPartition = (int) Math.ceil((double) tpe.getMaximumPoolSize() / highLevelActorConfig.getPartitions());
                     return Math.min(perPartition, highLevelActorConfig.getMaxConcurrencyPerPartition());
                 }
                 return highLevelActorConfig.getMaxConcurrencyPerPartition();
