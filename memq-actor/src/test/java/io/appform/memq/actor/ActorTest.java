@@ -23,7 +23,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  *
@@ -85,16 +86,16 @@ class ActorTest {
 
     @Test
     @SneakyThrows
-    void testObserverMessageMetaHasCorrectTimestamps() {
+    void testObserverMessageMeta() {
         val captured = new AtomicReference<ObserverMessageMeta>();
         val observer = new ActorObserver(null) {
             @Override
-            public void initialize(Actor<? extends io.appform.memq.actor.Message> actor) {
+            public void initialize(Actor<? extends Message> actor) {
                 // no-op
             }
 
             @Override
-            public boolean execute(ActorObserverContext<? extends io.appform.memq.actor.Message> context,
+            public boolean execute(ActorObserverContext<? extends Message> context,
                                    BooleanSupplier supplier) {
                 if (context.getOperation() == ActorOperation.CONSUME) {
                     captured.set(context.getMessageMeta());
