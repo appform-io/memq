@@ -23,7 +23,11 @@ public interface ActorSystem extends AutoCloseable {
 
     void register(Actor<?> actor);
 
-    ExecutorService createOrGetExecutorService(String name, HighLevelActorConfig config);
+    default ExecutorService createOrGetExecutorService(HighLevelActorConfig config) {
+        return createOrGetExecutorService(null, config);
+    }
+
+    ExecutorService createOrGetExecutorService(String actorName, HighLevelActorConfig config);
 
     RetryStrategy createRetryer(HighLevelActorConfig highLevelActorConfig);
 

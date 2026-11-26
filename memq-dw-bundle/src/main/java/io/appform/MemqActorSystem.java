@@ -70,12 +70,15 @@ public class MemqActorSystem implements ActorSystem, Managed {
     }
 
     @Override
-    public final ExecutorService createOrGetExecutorService(String name, HighLevelActorConfig config) {
+    public final ExecutorService createOrGetExecutorService(String actorName, HighLevelActorConfig config) {
         val executorName = config.getExecutorName();
         val threadPoolSize = determineThreadPoolSize(executorName);
-        val queues = executorQueues.computeIfAbsent(executorName, k -> ConcurrentHashMap.newKeySet());
-        queues.add(name);
-        log.info("Queue '{}' using executor '{}' (threadPoolSize={}), executor shared by {} queues: {}", name, executorName, threadPoolSize, queues.size(), queues);
+        if (actorName != null) {
+            val queues = executorQueues.computeIfAbsent(executorName, k -> ConcurrentHashMap.newKeySet());
+            queues.add(actorName);
+            log.info("Queue '{}' using executor '{}' (threadPoolSize={}), executor shared by {} queues: {}",
+                    actorName, executorName, threadPoolSize, queues.size(), queues);
+        }
         return executors.computeIfAbsent(executorName,
                                          executor -> executorServiceProvider.threadPool(executorName, threadPoolSize));
     }
