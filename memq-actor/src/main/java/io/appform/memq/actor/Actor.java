@@ -136,8 +136,8 @@ public class Actor<M extends Message> implements AutoCloseable {
     }
 
    void processWithObserver(final InternalMessage<M> internalMessage) {
-        val observerMessageMeta = new ObserverMessageMeta(internalMessage.getId(), internalMessage.getPublishedAt(),
-                internalMessage.getValidTill());
+        val observerMessageMeta = new ObserverMessageMeta(internalMessage.getId(), internalMessage.getValidTill(),
+                internalMessage.getPublishedAt());
         this.rootObserver.execute(ActorObserverContext.builder()
                         .messageMeta(observerMessageMeta)
                         .message(internalMessage.getMessage())

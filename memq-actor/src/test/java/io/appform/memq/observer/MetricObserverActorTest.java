@@ -1,6 +1,7 @@
 package io.appform.memq.observer;
 
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
 import io.appform.memq.ActorSystem;
 import io.appform.memq.Constants;
 import io.appform.memq.MemQTestExtension;
@@ -30,6 +31,7 @@ class MetricObserverActorTest {
         val totalPostfix = ".total";
         val successPostfix = ".success";
         val failedPostfix = ".failed";
+        val queueWaitPostfix = ".queue_wait";
         val counter = new AtomicInteger();
         val sideline = new AtomicBoolean();
         val actorConfig = TestUtil.noRetryActorConfig(Constants.SINGLE_PARTITION, false);
@@ -41,7 +43,8 @@ class MetricObserverActorTest {
                 .catchUncaughtExceptions()
                 .until(actor::isEmpty); //Wait until all messages are processed
         val metrics = actorSystem.metricRegistry().getMetrics();
-        assertEquals(18, metrics.size());
+        assertEquals(19, metrics.size());
+        assertEquals(1, ((Timer) metrics.get(metricPrefix + ActorOperation.CONSUME.name() + queueWaitPostfix)).getCount());
         assertEquals(1, ((Meter) metrics.get(metricPrefix + ActorOperation.PUBLISH.name() + totalPostfix)).getCount());
         assertEquals(1, ((Meter) metrics.get(metricPrefix + ActorOperation.PUBLISH.name() + successPostfix)).getCount());
         assertEquals(0, ((Meter) metrics.get(metricPrefix + ActorOperation.PUBLISH.name() + failedPostfix)).getCount());
