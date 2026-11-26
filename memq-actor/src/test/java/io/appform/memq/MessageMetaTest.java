@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MessageMetaTest {
+class MessageMetaTest {
 
 
     @Test

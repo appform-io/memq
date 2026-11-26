@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
@@ -30,8 +30,8 @@ public class Actor<M extends Message> implements AutoCloseable {
     private final Dispatcher<M> messageDispatcher;
     private final ToIntFunction<M> partitioner;
     private final Map<Integer, Mailbox<M>> mailboxes;
-    private final BiFunction<M, MessageMeta, Boolean> validationHandler;
-    private final BiFunction<M, MessageMeta, Boolean> consumerHandler;
+    private final BiPredicate<M, MessageMeta> validationHandler;
+    private final BiPredicate<M, MessageMeta> consumerHandler;
     private final BiConsumer<M, MessageMeta> sidelineHandler;
     private final TriConsumer<M, MessageMeta, Throwable> exceptionHandler;
     private final RetryStrategy retryer;
@@ -42,8 +42,8 @@ public class Actor<M extends Message> implements AutoCloseable {
     public Actor(
             String name,
             ExecutorService executorService,
-            BiFunction<M, MessageMeta, Boolean> validationHandler,
-            BiFunction<M, MessageMeta, Boolean> consumerHandler,
+            BiPredicate<M, MessageMeta> validationHandler,
+            BiPredicate<M, MessageMeta> consumerHandler,
             BiConsumer<M, MessageMeta> sidelineHandler,
             TriConsumer<M, MessageMeta, Throwable> exceptionHandler,
             RetryStrategy retryer,
@@ -61,11 +61,14 @@ public class Actor<M extends Message> implements AutoCloseable {
         Objects.requireNonNull(sidelineHandler, "SidelineHandler cannot be null");
         Objects.requireNonNull(exceptionHandler, "ExceptionHandler cannot be null");
         Objects.requireNonNull(dispatcherType,"Dispatcher cannot be null");
+        // Switch ensures validation is performed for all dispatcher types.
+        // Adding a new DispatcherType will cause a compile error here if not handled.
         switch (dispatcherType){
             case SYNC ->
                     Preconditions.checkArgument( maxConcurrencyPerPartition == maxSizePerPartition,
                     "Max Queue size and max concurrency has to be same for sync dispatcher");
             case ASYNC_ISOLATED -> {
+                // No-op: ASYNC_ISOLATED dispatcher has no specific validation requirements
             }
         }
         
@@ -169,7 +172,7 @@ public class Actor<M extends Message> implements AutoCloseable {
                             .operation(ActorOperation.VALIDATE)
                             .actorName(this.name)
                             .build(),
-                    () -> this.validationHandler.apply(message, messageMeta));
+                    () -> this.validationHandler.test(message, messageMeta));
             if (!valid) {
                 log.debug("Message validation failed for message: {}", message);
                 return false;
@@ -177,7 +180,7 @@ public class Actor<M extends Message> implements AutoCloseable {
             else {
                 status = this.retryer.execute(() -> {
                     messageMeta.incrementAttempt();
-                    return this.consumerHandler.apply(message, messageMeta);
+                    return this.consumerHandler.test(message, messageMeta);
                 });
                 if (!status) {
                     log.debug("Consumer failed for message: {}", message);

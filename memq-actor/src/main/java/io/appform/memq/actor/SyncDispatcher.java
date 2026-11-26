@@ -37,6 +37,7 @@ class SyncDispatcher<M extends Message> implements Dispatcher<M> {
 
     @Override
     public void close() {
+        // No-op: SyncDispatcher has no resources to clean up
     }
 }
 
