@@ -22,6 +22,7 @@ import org.awaitility.Awaitility;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,7 +52,7 @@ public class TestUtil {
             }
 
             @Override
-            public ExecutorService createOrGetExecutorService(HighLevelActorConfig config) {
+            public ExecutorService createOrGetExecutorService(String name, HighLevelActorConfig config) {
                 return tp;
             }
 
@@ -78,6 +79,17 @@ public class TestUtil {
             @Override
             public boolean isRunning() {
                 return !registeredActors.isEmpty() && registeredActors.stream().allMatch(Actor::isRunning);
+            }
+
+            @Override
+            public int maxConcurrencyPerPartition(HighLevelActorConfig highLevelActorConfig) {
+                //SYNC dispatcher requires maxConcurrency == maxSize, so cap is not applicable
+                if (dispatcherType != DispatcherType.SYNC && tp instanceof ThreadPoolExecutor tpe) {
+                    //Floor so that sum across partitions never exceeds pool size (min 1 per partition)
+                    val perPartition = Math.max(1, tpe.getMaximumPoolSize() / highLevelActorConfig.getPartitions());
+                    return Math.min(perPartition, highLevelActorConfig.getMaxConcurrencyPerPartition());
+                }
+                return highLevelActorConfig.getMaxConcurrencyPerPartition();
             }
 
             @Override

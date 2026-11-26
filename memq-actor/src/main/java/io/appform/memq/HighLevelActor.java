@@ -85,7 +85,7 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
         this.type = type;
         this.name = name;
         this.actor = new Actor<>(name,
-                actorSystem.createOrGetExecutorService(highLevelActorConfig),
+                actorSystem.createOrGetExecutorService(name, highLevelActorConfig),
                 actorSystem.expiryValidator(highLevelActorConfig),
                 this::handle,
                 this::sideline,
@@ -94,7 +94,7 @@ public abstract class HighLevelActor<MessageType extends Enum<MessageType>, M ex
                 actorSystem.registeredDispatcher(name),
                 highLevelActorConfig.getPartitions(),
                 highLevelActorConfig.getMaxSizePerPartition(),
-                highLevelActorConfig.getMaxConcurrencyPerPartition(),
+                actorSystem.maxConcurrencyPerPartition(highLevelActorConfig),
                 actorSystem.partitioner(highLevelActorConfig, partitioner),
                 actorSystem.observers(name, highLevelActorConfig, observers));
         actorSystem.register(actor);

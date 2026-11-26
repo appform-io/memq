@@ -30,7 +30,7 @@ public class HighLevelActorConfig {
 
     @Min(1)
     @Builder.Default
-    int maxConcurrencyPerPartition = Integer.MAX_VALUE;
+    int maxConcurrencyPerPartition = 1024;
 
     @Valid
     @NotNull

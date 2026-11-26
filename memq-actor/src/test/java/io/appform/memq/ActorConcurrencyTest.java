@@ -19,11 +19,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 public class ActorConcurrencyTest {
+
+    private static final int POOL_SIZE = 2;
+    private static final int CONFIGURED_CONCURRENCY = 10;
 
     @Test
     @SneakyThrows
@@ -92,6 +96,53 @@ public class ActorConcurrencyTest {
                     .until(actor::isEmpty);
             val metrics = actorSystem.metricRegistry().getMetrics();
             assertEquals(10, ((Meter) metrics.get(metricPrefix + ActorOperation.PUBLISH.name() + ".success")).getCount());
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    void testAsyncConcurrencyCappedToPoolSize() {
+        val tp = Executors.newFixedThreadPool(POOL_SIZE);
+        try (val actorSystem = TestUtil.actorSystem(tp, DispatcherType.ASYNC_ISOLATED)) {
+            val counter = new AtomicInteger();
+            val blockConsume = new AtomicBoolean(true);
+            val config = TestUtil.noRetryActorConfig(Constants.SINGLE_PARTITION, false,
+                    CONFIGURED_CONCURRENCY, CONFIGURED_CONCURRENCY);
+            val actor = TestUtil.blockingActor(counter, new AtomicBoolean(), blockConsume,
+                    config, actorSystem, List.of());
+            IntStream.range(0, CONFIGURED_CONCURRENCY)
+                    .forEach(i -> assertTrue(actor.publish(new TestIntMessage(1))));
+
+            Awaitility.await()
+                    .timeout(Duration.ofSeconds(10))
+                    .until(() -> actor.inFlight() == POOL_SIZE);
+            //Give dispatcher a chance to over-dispatch, if it would
+            Thread.sleep(200);
+            assertEquals(POOL_SIZE, actor.inFlight());
+
+            blockConsume.set(false);
+            Awaitility.await()
+                    .timeout(Duration.ofSeconds(30))
+                    .until(actor::isEmpty);
+            assertEquals(CONFIGURED_CONCURRENCY, counter.get());
+        }
+        finally {
+            tp.shutdownNow();
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    void testSyncDispatcherNotCappedWhenPoolSmaller() {
+        val tp = Executors.newFixedThreadPool(POOL_SIZE);
+        try (val actorSystem = TestUtil.actorSystem(tp, DispatcherType.SYNC)) {
+            val config = TestUtil.noRetryActorConfig(Constants.SINGLE_PARTITION, false,
+                    CONFIGURED_CONCURRENCY, CONFIGURED_CONCURRENCY);
+            assertDoesNotThrow(() -> TestUtil.blockingActor(new AtomicInteger(), new AtomicBoolean(),
+                    new AtomicBoolean(false), config, actorSystem, List.of()));
+        }
+        finally {
+            tp.shutdownNow();
         }
     }
 }
