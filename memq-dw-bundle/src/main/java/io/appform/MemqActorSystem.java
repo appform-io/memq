@@ -17,6 +17,7 @@ import lombok.val;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 public class MemqActorSystem implements ActorSystem, Managed {
 
     private final ConcurrentHashMap<String, ExecutorService> executors;
+    private final ConcurrentHashMap<String, Set<String>> executorQueues;
     private final ExecutorServiceProvider executorServiceProvider;
     private final Map<String, ExecutorConfig> executorConfigMap;
     private final List<Actor<?>> registeredActors;
@@ -47,6 +49,7 @@ public class MemqActorSystem implements ActorSystem, Managed {
         this.executorConfigMap = memqConfig.getExecutors().stream()
                 .collect(Collectors.toMap(ExecutorConfig::getName, Function.identity()));
         this.executors = new ConcurrentHashMap<>();
+        this.executorQueues = new ConcurrentHashMap<>();
         this.registeredActors = new ArrayList<>();
         this.actorObservers = actorObservers;
         this.retryStrategyFactory = new RetryStrategyFactory();
@@ -67,10 +70,17 @@ public class MemqActorSystem implements ActorSystem, Managed {
     }
 
     @Override
-    public final ExecutorService createOrGetExecutorService(HighLevelActorConfig config) {
-        val name = config.getExecutorName();
-        val threadPoolSize = determineThreadPoolSize(name);
-        return executors.computeIfAbsent(name, executor -> executorServiceProvider.threadPool(name, threadPoolSize));
+    public final ExecutorService createOrGetExecutorService(String actorName, HighLevelActorConfig config) {
+        val executorName = config.getExecutorName();
+        val threadPoolSize = determineThreadPoolSize(executorName);
+        if (actorName != null) {
+            val queues = executorQueues.computeIfAbsent(executorName, k -> ConcurrentHashMap.newKeySet());
+            queues.add(actorName);
+            log.info("Queue '{}' using executor '{}' (threadPoolSize={}), executor shared by {} queues: {}",
+                    actorName, executorName, threadPoolSize, queues.size(), queues);
+        }
+        return executors.computeIfAbsent(executorName,
+                                         executor -> executorServiceProvider.threadPool(executorName, threadPoolSize));
     }
 
     @Override
@@ -96,6 +106,13 @@ public class MemqActorSystem implements ActorSystem, Managed {
     @Override
     public boolean isRunning() {
         return !registeredActors.isEmpty() && registeredActors.stream().allMatch(Actor::isRunning);
+    }
+
+    @Override
+    public int maxConcurrencyPerPartition(HighLevelActorConfig highLevelActorConfig) {
+        val maxPoolSize = determineThreadPoolSize(highLevelActorConfig.getExecutorName());
+        int maxPoolSizePerPartition = (int) Math.ceil((double) maxPoolSize / highLevelActorConfig.getPartitions());
+        return Math.min(maxPoolSizePerPartition, highLevelActorConfig.getMaxConcurrencyPerPartition());
     }
 
     @Override

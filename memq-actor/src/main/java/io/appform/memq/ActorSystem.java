@@ -23,7 +23,11 @@ public interface ActorSystem extends AutoCloseable {
 
     void register(Actor<?> actor);
 
-    ExecutorService createOrGetExecutorService(HighLevelActorConfig config);
+    default ExecutorService createOrGetExecutorService(HighLevelActorConfig config) {
+        return createOrGetExecutorService(null, config);
+    }
+
+    ExecutorService createOrGetExecutorService(String actorName, HighLevelActorConfig config);
 
     RetryStrategy createRetryer(HighLevelActorConfig highLevelActorConfig);
 
@@ -91,4 +95,7 @@ public interface ActorSystem extends AutoCloseable {
         return message -> Math.absExact(message.id().hashCode()) % highLevelActorConfig.getPartitions();
     }
 
+    default int maxConcurrencyPerPartition(HighLevelActorConfig highLevelActorConfig) {
+        return highLevelActorConfig.getMaxConcurrencyPerPartition();
+    }
 }

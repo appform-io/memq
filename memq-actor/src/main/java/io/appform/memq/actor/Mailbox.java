@@ -21,6 +21,7 @@ class Mailbox<M extends Message> implements AutoCloseable {
     private final Map<String, InternalMessage<M>> messages = new LinkedHashMap<>();
     private final Set<String> inFlight = new HashSet<>();
     private final ReentrantLock lock = new ReentrantLock();
+    private boolean closed = false; //Gaurded by lock
 
     public Mailbox(Actor<M> actor, int partition, long maxSize, int maxConcurrency) {
         this.actor = actor;
@@ -100,6 +101,7 @@ class Mailbox<M extends Message> implements AutoCloseable {
     public final void close() {
         acquireLock();
         try {
+            closed = true;
             actor.getMessageDispatcher().deRegister(this);
         }
         finally {
@@ -123,8 +125,13 @@ class Mailbox<M extends Message> implements AutoCloseable {
     void releaseMessage(String id) {
         acquireLock();
         try {
+            val wasSaturated = inFlight.size() >= maxConcurrency;
             inFlight.remove(id);
             messages.remove(id);
+            //Wake dispatcher only if a slot freed up from saturation
+            if (wasSaturated && !closed) {
+                actor.getMessageDispatcher().triggerDispatch(this);
+            }
         }
         finally {
             releaseLock();
