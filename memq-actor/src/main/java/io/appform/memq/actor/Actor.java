@@ -144,7 +144,7 @@ public class Actor<M extends Message> implements AutoCloseable {
                         .operation(ActorOperation.CONSUME)
                         .actorName(this.name)
                         .build(),
-                () -> process(internalMessage));
+                () -> process(internalMessage, observerMessageMeta));
     }
 
     String getName() {
@@ -159,7 +159,7 @@ public class Actor<M extends Message> implements AutoCloseable {
         return messageDispatcher;
     }
 
-    private boolean process(final InternalMessage<M> internalMessage) {
+    private boolean process(final InternalMessage<M> internalMessage, final ObserverMessageMeta observerMessageMeta) {
         val id = internalMessage.getId();
         val message = internalMessage.getMessage();
         var status = false;
@@ -168,6 +168,7 @@ public class Actor<M extends Message> implements AutoCloseable {
                 internalMessage.getHeaders());
         try {
             val valid = this.rootObserver.execute(ActorObserverContext.builder()
+                            .messageMeta(observerMessageMeta)
                             .message(message)
                             .operation(ActorOperation.VALIDATE)
                             .actorName(this.name)
@@ -185,6 +186,7 @@ public class Actor<M extends Message> implements AutoCloseable {
                 if (!status) {
                     log.debug("Consumer failed for message: {}", message);
                     this.rootObserver.execute(ActorObserverContext.builder()
+                                    .messageMeta(observerMessageMeta)
                                     .message(message)
                                     .operation(ActorOperation.SIDELINE)
                                     .actorName(this.name)
@@ -198,6 +200,7 @@ public class Actor<M extends Message> implements AutoCloseable {
         } catch (Exception e) {
             log.error("Error processing message : " + id, e);
             this.rootObserver.execute(ActorObserverContext.builder()
+                            .messageMeta(observerMessageMeta)
                             .message(message)
                             .operation(ActorOperation.HANDLE_EXCEPTION)
                             .actorName(this.name)

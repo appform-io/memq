@@ -3,7 +3,6 @@ package io.appform.memq.stats;
 
 import com.codahale.metrics.*;
 import io.appform.memq.actor.Actor;
-import io.appform.memq.actor.ActorOperation;
 import io.appform.memq.actor.Message;
 import io.appform.memq.observer.ActorObserver;
 import io.appform.memq.observer.ActorObserverContext;
@@ -94,10 +93,10 @@ public class ActorMetricObserver extends ActorObserver {
      */
     private void recordQueueWait(final ActorObserverContext<? extends Message> context,
                                  final MetricData metricData) {
-        if (metricData.getQueueWait() == null || context.getMessageMeta() == null) {
+        if (context.getMessageMeta() == null) {
             return;
         }
-        val waitMs = Math.max(0, System.currentTimeMillis() - context.getMessageMeta().getPublishedAt());
+        val waitMs = System.currentTimeMillis() - context.getMessageMeta().getPublishedAt();
         metricData.getQueueWait().update(waitMs, TimeUnit.MILLISECONDS);
     }
 
@@ -107,20 +106,18 @@ public class ActorMetricObserver extends ActorObserver {
                 .operation(context.getOperation().name())
                 .build();
         return metricCache.computeIfAbsent(metricKeyData, key ->
-                getMetricData(getMetricPrefix(metricKeyData), context.getOperation()));
+                getMetricData(getMetricPrefix(metricKeyData)));
     }
 
-    private MetricData getMetricData(final String metricPrefix, final ActorOperation operation) {
+    private MetricData getMetricData(final String metricPrefix) {
         return MetricData.builder()
                 .timer(metricRegistry.timer(MetricRegistry.name(metricPrefix, "latency"),
                                             () -> new Timer(new SlidingTimeWindowArrayReservoir(60, TimeUnit.SECONDS))))
                 .success(metricRegistry.meter(MetricRegistry.name(metricPrefix, "success")))
                 .failed(metricRegistry.meter(MetricRegistry.name(metricPrefix, "failed")))
                 .total(metricRegistry.meter(MetricRegistry.name(metricPrefix, "total")))
-                .queueWait(operation == ActorOperation.CONSUME
-                           ? metricRegistry.timer(MetricRegistry.name(metricPrefix, "queue_wait"),
-                                                  () -> new Timer(new SlidingTimeWindowArrayReservoir(60, TimeUnit.SECONDS)))
-                           : null)
+                .queueWait(metricRegistry.timer(MetricRegistry.name(metricPrefix, "queue_wait"),
+                                                () -> new Timer(new SlidingTimeWindowArrayReservoir(60, TimeUnit.SECONDS))))
                 .build();
     }
 
