@@ -66,6 +66,7 @@ public class ActorMetricObserver extends ActorObserver {
 
     private boolean metered(ActorObserverContext<? extends Message> context, BooleanSupplier supplier) {
         val metricData = getMetricData(context);
+        recordQueueWait(context, metricData);
         metricData.getTotal().mark();
         val timer = metricData.getTimer().time();
         try {
@@ -87,6 +88,18 @@ public class ActorMetricObserver extends ActorObserver {
         }
     }
 
+    /**
+     * Records time spent by a message between publish and start of consumption.
+     */
+    private void recordQueueWait(final ActorObserverContext<? extends Message> context,
+                                 final MetricData metricData) {
+        if (context.getMessageMeta() == null) {
+            return;
+        }
+        val waitMs = System.currentTimeMillis() - context.getMessageMeta().getPublishedAt();
+        metricData.getQueueWait().update(waitMs, TimeUnit.MILLISECONDS);
+    }
+
     private MetricData getMetricData(final ActorObserverContext<? extends Message> context) {
         val metricKeyData = MetricKeyData.builder()
                 .actorName(actorName)
@@ -103,6 +116,8 @@ public class ActorMetricObserver extends ActorObserver {
                 .success(metricRegistry.meter(MetricRegistry.name(metricPrefix, "success")))
                 .failed(metricRegistry.meter(MetricRegistry.name(metricPrefix, "failed")))
                 .total(metricRegistry.meter(MetricRegistry.name(metricPrefix, "total")))
+                .queueWait(metricRegistry.timer(MetricRegistry.name(metricPrefix, "queue_wait"),
+                                                () -> new Timer(new SlidingTimeWindowArrayReservoir(60, TimeUnit.SECONDS))))
                 .build();
     }
 

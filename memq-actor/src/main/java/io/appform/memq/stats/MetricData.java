@@ -12,4 +12,5 @@ public class MetricData {
     Meter success;
     Meter failed;
     Timer timer;
+    Timer queueWait;
 }
